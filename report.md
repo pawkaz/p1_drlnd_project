@@ -74,7 +74,7 @@ Best average score: 16.73
 ```
 ## Ideas for Future Work
 
-There are many other potentail improvements to the vanilla DQN framework. My plans are listed below:
+There are many other potential improvements to the vanilla DQN framework. My plans are listed below:
 
 - [x] Implement dueling network.
 - [x] Implement double DQN.

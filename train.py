@@ -33,9 +33,6 @@ def main(args):
     fig.savefig("scores.png")
     env_wr.close()
 
-def evaluate(env, agent)->int:
-    """
-    """
 
 
 def train(env, agent, n_episodes:int=1000, score_threshold:float=32)->list:
@@ -122,6 +119,5 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Train DDPG Network')
     parser.add_argument('--path', dest='path', help='path to environment', default="Reacher_Linux/Reacher.x86_64", type=str)
     parser.add_argument('--episodes', dest='episodes', help='number of episodes', default=200, type=int)
-    parser.add_argument('--eval', dest='eval', help='run evaluation', default=200, type=int)
     args = parser.parse_args()
     main(args)

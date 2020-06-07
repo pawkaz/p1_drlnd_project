@@ -37,9 +37,11 @@ The observation space consists of 33 variables corresponding to position, rotati
     
     (_For Windows users_) Check out [this link](https://support.microsoft.com/en-us/help/827218/how-to-determine-whether-a-computer-is-running-a-32-bit-version-or-64) if you need help with determining if your computer is running a 32-bit version or 64-bit version of the Windows operating system.
 
-   
+  
 
 2. Place the file in the repository, and unzip (or decompress) the file. 
+
+3. Follow instructions from the [DRLND GitHub repository](https://github.com/udacity/deep-reinforcement-learning#dependencies) to install required python dependencies.
 
 ### Train model
 To train the agent, run in the terminal:

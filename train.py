@@ -10,7 +10,7 @@ from matplotlib import pyplot as plt
 from unityagents import UnityEnvironment
 from torch.utils import tensorboard
 from time import time
-from ddpg_agent import Agent
+from maddpg_agent import Agent
 
 matplotlib.use('Agg')
 
@@ -22,9 +22,10 @@ def main(args):
 
     env_wr = EnvWrapper(env)
 
-    agent = Agent(state_size=33, action_size=4, random_seed=10)
+    agentA = Agent(state_size=24, action_size=2, random_seed=10, order=0)
+    agentB = Agent(state_size=24, action_size=2, random_seed=11, order=1)
 
-    scores = train(env_wr, agent, n_episodes=args.episodes)
+    scores = train(env_wr, (agentA, agentB), n_episodes=args.episodes)
 
     fig, ax = plt.subplots(1, 1, figsize=(8, 8))
     ax.plot(scores)
@@ -35,7 +36,7 @@ def main(args):
 
 
 
-def train(env, agent, n_episodes:int=1000, score_threshold:float=32)->list:
+def train(env, agents, n_episodes:int=1000, score_threshold:float=.5)->list:
     """
     Params
     ======
@@ -45,17 +46,23 @@ def train(env, agent, n_episodes:int=1000, score_threshold:float=32)->list:
     scores_window:Deque[float] = deque(maxlen=100)
     best_score = float("-inf")
     writer = tensorboard.SummaryWriter(f"runs/{int(time())}")
+    agentA, agentB = agents
     for i_episode in range(1, n_episodes+1):
         state = env.reset()
         score = 0
         
         start = time()
         while True:
-            action = agent.act(state)
+            actionA = agentA.act(state[0])
+            actionB = agentB.act(state[1])
+            action = np.stack((actionA, actionB))
             next_state, reward, done, _ = env.step(action)
-            agent.step(state, action, reward, next_state, done)
+            next_actionA = agentA.act(next_state[0], False)
+            next_actionB = agentB.act(next_state[1], False)
+            agentA.step(state, action, reward, next_state, done, next_actionB)
+            agentB.step(state, action, reward, next_state, done, next_actionA)
             state = next_state
-            score += np.mean(reward)
+            score += np.max(reward)
             if np.any(done):
                 break
 
@@ -67,7 +74,6 @@ def train(env, agent, n_episodes:int=1000, score_threshold:float=32)->list:
 
         writer.add_scalar("train/reward", score, i_episode)        
         writer.add_scalar("train/window", window_score, i_episode)
-        writer.add_scalar("train/memory_size", len(agent.memory), i_episode)
 
         
         print(f'\rEpisode {i_episode}\tAverage Score: {window_score:.2f}\tTime: {time_for_episode:.2f}', end="")
@@ -80,8 +86,10 @@ def train(env, agent, n_episodes:int=1000, score_threshold:float=32)->list:
 
         if window_score > best_score and window_score >= score_threshold:
             best_score = window_score
-            torch.save(agent.actor_local.state_dict(), 'checkpoint_actor.pt')
-            torch.save(agent.critic_local.state_dict(), 'checkpoint_critic.pt')
+            torch.save(agentA.actor_local.state_dict(), 'checkpoint_actor_A.pt')
+            torch.save(agentA.critic_local.state_dict(), 'checkpoint_critic_A.pt')
+            torch.save(agentB.actor_local.state_dict(), 'checkpoint_actor_B.pt')
+            torch.save(agentB.critic_local.state_dict(), 'checkpoint_critic_B.pt')
 
     print(f"Best average score: {best_score}")
     writer.close()
@@ -116,8 +124,8 @@ class EnvWrapper():
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Train DDPG Network')
-    parser.add_argument('--path', dest='path', help='path to environment', default="Reacher_Linux/Reacher.x86_64", type=str)
-    parser.add_argument('--episodes', dest='episodes', help='number of episodes', default=200, type=int)
+    parser = argparse.ArgumentParser(description='Train MADDPG Network')
+    parser.add_argument('--path', dest='path', help='path to environment', default="Tennis_Linux/Tennis.x86_64", type=str)
+    parser.add_argument('--episodes', dest='episodes', help='number of episodes', default=2100, type=int)
     args = parser.parse_args()
     main(args)
